@@ -266,7 +266,7 @@ function Dashboard() {
 
       const energyUsed = Math.max(selectedMetrics.energyUsed, 0)
       const batteryUsage = (energyUsed / batteryCapacity) * 100
-      const co2Saved = distanceNumber * co2Factor
+      const co2Saved= distanceNumber * co2Factor
       const regenerated = selectedMetrics.regeneratedEnergy
 
       const elevationData = {
@@ -475,7 +475,7 @@ function Dashboard() {
       console.log(
         "Segment:",
         segmentIndex,
-        "Energy Used:",
+        "Energy Usage:",
         netEnergy.toFixed(2),
         "kWh"
       )
@@ -490,7 +490,7 @@ function Dashboard() {
 
       console.log(
         "Battery:",
-        currentBattery.toFixed(3) + "%"
+        currentBattery.toFixed(2) + "%"
       )
 
       const arrival = new Date(
@@ -572,7 +572,7 @@ function Dashboard() {
               <p>
                 Current Battery:{" "}
                 {navigationStarted
-                  ? `${liveBattery.toFixed(3)}%`
+                  ? `${liveBattery.toFixed(2)}%`
                   : `${startingBattery}%`}
               </p>
 
@@ -612,9 +612,9 @@ function Dashboard() {
               </div>
 
               <div className="rounded-2xl bg-slate-800 p-4">
-                <p className="text-gray-400">Energy Used</p>
+                <p className="text-gray-400">Energy Usage</p>
                 <h2 className="text-2xl font-bold text-green-400">
-                  {routeInfo?.energyUsed || "--"} kWh
+                  {routeInfo?.energyUsage || "--"} kWh
                 </h2>
               </div>
 
@@ -628,7 +628,7 @@ function Dashboard() {
               <div className="rounded-2xl bg-slate-800 p-4">
                 <p className="text-gray-400">Regenerated</p>
                 <h2 className="text-2xl font-bold text-green-400">
-                  {routeInfo?.regenerated || "--"} kWh
+                  {routeInfo?.regeneratedEnergy || "--"} kWh
                 </h2>
               </div>
 
