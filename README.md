@@ -1,16 +1,54 @@
-# React + Vite
+# Green Transition Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A web-based dashboard for **electric mobility and sustainable route optimization**. The project focuses on real-time mobility and sustainability data, including CO₂ savings, energy consumption, battery usage, regenerative energy, and topography-based route analysis.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* Fast and Eco route planning
+* Interactive map with GPS navigation
+* Real-time GPS position tracking
+* Real-time mobility and sustainability data
+* Energy and battery consumption estimation
+* Regenerative energy analysis
+* CO₂ savings estimation
+* Topography-based route analysis
 
-## React Compiler
+## Technology Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* **Frontend:** React, Vite, Leaflet
+* **Backend:** Node.js, Express
+* **Database:** MySQL
+* **Routing:** OpenRouteService
+* **Map & Geolocation:** Leaflet, Browser Geolocation API
 
-## Expanding the ESLint configuration
+## Project Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```text
+green-dashboard/
+├── frontend/
+└── backend/
+```
+
+## Running Locally
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Backend
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+### Environment Variables
+
+Create the required `.env` files locally and configure the necessary API and database credentials.
+
+> Do not commit API keys, passwords, or other sensitive credentials to the repository.
