@@ -13,6 +13,7 @@ function RoutePlanner({ onRouteChange, loading }) {
                     const lat = position.coords.latitude
                     const lon = position.coords.longitude
 
+
                     const response = await fetch(
                         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
                     )

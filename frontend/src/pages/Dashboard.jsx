@@ -3,7 +3,7 @@ import MapView from "../components/MapView"
 import RoutePlanner from "../components/RoutePlanner"
 import { getRoute, getRemainingRoute } from "../services/routeService"
 import { getCoordinates } from "../services/geocodeService"
-
+import vehicles from "../data/vehicles-temp"
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371 // Earth radius in km
@@ -23,12 +23,11 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c
 }
 
-function buildRouteSegments(coordinates) {
+function buildRouteSegments(coordinates, baseEnergyRate) {
   const segments = []
 
   let cumulativeEnergy = 0
 
-  const baseEnergyRate = 0.18
   const uphillFactor = 0.001
   const regenFactor = 0.0005
 
@@ -79,6 +78,8 @@ function buildRouteSegments(coordinates) {
 function Dashboard() {
   const [routeInfo, setRouteInfo] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [registrationNumber, setRegistrationNumber] = useState("")
+  const [selectedVehicle, setSelectedVehicle] = useState(null)
   const [currentPosition, setCurrentPosition] = useState(null)
   const [navigationStarted, setNavigationStarted] = useState(false)
   const [routeCoordinates, setRouteCoordinates] = useState([])
@@ -86,7 +87,7 @@ function Dashboard() {
   const [currentSpeed, setCurrentSpeed] = useState(0)
   const [remainingTime, setRemainingTime] = useState(null)
   const [liveArrivalTime, setLiveArrivalTime] = useState("")
-  const BATTERY_CAPACITY = 60 // kWh
+  const BATTERY_CAPACITY = selectedVehicle?.batteryCapacity || 60
   const [startingBattery] = useState(100)
   const [liveBattery, setLiveBattery] = useState(100)
   const [routeSegments, setRouteSegments] = useState([])
@@ -117,12 +118,33 @@ function Dashboard() {
     return nearestIndex
   }
 
+  function findVehicle() {
+    const registration = registrationNumber
+      .trim()
+      .toUpperCase()
+
+    const vehicle = vehicles[registration]
+
+    if (!vehicle) {
+      alert("Vehicle not found.")
+      setSelectedVehicle(null)
+      return
+    }
+
+    setSelectedVehicle(vehicle)
+  }
+
   async function handleRouteChange(route) {
 
     stopNavigation() // Stop any ongoing navigation when a new route is planned
 
     if (!route) {
       setRouteInfo(null)
+      return
+    }
+
+    if (!selectedVehicle) {
+      alert("Please find your vehicle before planning a route.")
       return
     }
 
@@ -178,7 +200,7 @@ function Dashboard() {
         const distanceKm = summary.distance / 1000
         const durationMin = summary.duration / 60
 
-        const baseEnergyRate = 0.18
+        const baseEnergyRate = selectedVehicle.energyConsumption / 100
         const uphillFactor = 0.001
         const regenFactor = 0.0005
 
@@ -231,7 +253,8 @@ function Dashboard() {
       const selectedFeature = selectedMetrics.feature
 
       const segments = buildRouteSegments(
-        selectedFeature.geometry.coordinates
+        selectedFeature.geometry.coordinates,
+        selectedVehicle.energyConsumption / 100
       )
 
       setRouteSegments(segments)
@@ -261,12 +284,20 @@ function Dashboard() {
       const distanceNumber = Number(distanceKm)
       const averageSpeed = distanceNumber / (durationMin / 60)
 
-      const batteryCapacity = 60
-      const co2Factor = 0.10
+      const fingridResponse = await fetch(
+        "http://localhost:5000/api/fingrid/co2-intensity"
+      )
+
+      const fingridData = await fingridResponse.json()
+
+      const electricityCarbonIntensity =
+        fingridData.data[0].value / 1000
+
+      const batteryCapacity = selectedVehicle.batteryCapacity
 
       const energyUsed = Math.max(selectedMetrics.energyUsed, 0)
       const batteryUsage = (energyUsed / batteryCapacity) * 100
-      const co2Saved= distanceNumber * co2Factor
+      const co2Emissions = energyUsed * electricityCarbonIntensity
       const regenerated = selectedMetrics.regeneratedEnergy
 
       const elevationData = {
@@ -289,7 +320,7 @@ function Dashboard() {
             arrivalTime,
             energyUsed,
             batteryUsage,
-            co2Saved,
+            co2Emissions,
             regeneratedEnergy: regenerated,
             totalUphill: elevationData.totalUphill,
             totalDownhill: elevationData.totalDownhill,
@@ -314,7 +345,7 @@ function Dashboard() {
         sameRoute,
         batteryUsage: batteryUsage.toFixed(1),
         energyUsed: energyUsed.toFixed(1),
-        co2Saved: co2Saved.toFixed(1),
+        co2Emissions: co2Emissions.toFixed(2),
         regenerated: regenerated.toFixed(1),
         averageSpeed: averageSpeed.toFixed(1),
         arrivalTime,
@@ -365,12 +396,14 @@ function Dashboard() {
           previousGpsRef.current &&
           previousGpsTimeRef.current
         ) {
-          const distanceMeters = calculateDistance(
+          const distanceKm = calculateDistance(
             previousGpsRef.current[0],
             previousGpsRef.current[1],
             gps[0],
             gps[1]
           )
+
+          const distanceMeters = distanceKm * 1000
 
           const timeSeconds =
             (currentTime - previousGpsTimeRef.current) / 1000
@@ -532,6 +565,60 @@ function Dashboard() {
           EV route optimization using energy consumption and topography
         </p>
 
+        <div className="rounded-2xl bg-slate-900/80 border border-green-500/20 p-6 mb-6">
+
+          <h3 className="text-green-400 text-lg font-semibold mb-4">
+            Vehicle
+          </h3>
+
+          <div className="flex flex-col md:flex-row gap-3">
+
+            <input
+              type="text"
+              value={registrationNumber}
+              onChange={(e) => setRegistrationNumber(e.target.value)}
+              placeholder="Enter registration number"
+              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
+            />
+
+            <button
+              onClick={findVehicle}
+              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg"
+            >
+              Find Vehicle
+            </button>
+
+          </div>
+
+          {selectedVehicle && (
+            <div className="mt-5 bg-slate-800 rounded-xl p-4">
+
+              <h4 className="text-white font-semibold text-lg">
+                {selectedVehicle.make} {selectedVehicle.model}
+              </h4>
+
+              <p className="text-gray-400">
+                Variant: {selectedVehicle.variant}
+              </p>
+
+              <p className="text-gray-400">
+                Propulsion: {selectedVehicle.propulsion}
+              </p>
+
+              <p className="text-gray-400">
+                Battery Capacity: {selectedVehicle.batteryCapacity} kWh
+              </p>
+
+              <p className="text-gray-400">
+                Energy Consumption: {selectedVehicle.energyConsumption} kWh/100 km
+              </p>
+
+            </div>
+          )}
+
+        </div>
+
+
         <RoutePlanner onRouteChange={handleRouteChange} loading={loading} />
 
         <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -614,21 +701,21 @@ function Dashboard() {
               <div className="rounded-2xl bg-slate-800 p-4">
                 <p className="text-gray-400">Energy Usage</p>
                 <h2 className="text-2xl font-bold text-green-400">
-                  {routeInfo?.energyUsage || "--"} kWh
+                  {routeInfo?.energyUsed || "--"} kWh
                 </h2>
               </div>
 
               <div className="rounded-2xl bg-slate-800 p-4">
-                <p className="text-gray-400">CO₂ Saved</p>
+                <p className="text-gray-400">CO2 Emissions</p>
                 <h2 className="text-2xl font-bold text-green-400">
-                  {routeInfo?.co2Saved || "--"} kg
+                  {routeInfo?.co2Emissions || "--"} kg
                 </h2>
               </div>
 
               <div className="rounded-2xl bg-slate-800 p-4">
                 <p className="text-gray-400">Regenerated</p>
                 <h2 className="text-2xl font-bold text-green-400">
-                  {routeInfo?.regeneratedEnergy || "--"} kWh
+                  {routeInfo?.regenerated || "--"} kWh
                 </h2>
               </div>
 
