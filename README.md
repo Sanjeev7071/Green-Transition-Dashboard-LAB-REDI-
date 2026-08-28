@@ -1,6 +1,6 @@
 # Green Transition Dashboard
 
-A web-based dashboard for **electric mobility and sustainable route optimization**. The project focuses on real-time mobility and sustainability data, including CO₂ savings, energy consumption, battery usage, regenerative energy, and topography-based route analysis.
+A web-based dashboard for **electric mobility and sustainable route optimization**. The project focuses on real-time mobility and sustainability data, including CO₂ Emission, energy consumption, battery usage, regenerative energy, and topography-based route analysis.
 
 ## Features
 * Vehicle selection 
